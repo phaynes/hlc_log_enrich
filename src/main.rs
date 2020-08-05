@@ -14,7 +14,7 @@
 //!    Writes it back out in a series of chunks to support managed distribution.
 //! 
 
-const MAX_LOG_LINES_PER_FILE :i32 = 50000;
+const MAX_LOG_LINES_PER_FILE :i32 = 500000;
 
 #[macro_use]
 extern crate clap;
