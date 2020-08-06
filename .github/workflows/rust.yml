@@ -17,12 +17,5 @@ jobs:
     steps:
       - name: Check out the repo.
         uses: actions/checkout@v2
-      - name: Push to GitHub Packages
-        uses: docker/build-push-action@v1
-        with:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: phaynes/hlc_log_enrich/hlc_log_enrich
-          tag_with_ref: true
-   
+      - name: Build Release package
+        run: docker build -t hlc_log_enrich
