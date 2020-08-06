@@ -1,4 +1,4 @@
-# hlc_log_enrich: Enrich Log Files with time sourced from a Hybrid Logical Clock.
+# hlc_log_enrich: Enrich Log Files with time sourced from a Hybrid Logical Clock
 
 # Problem
 For scale and simplicity reasons, we want to be able to start programming the network as a single logical database. The network is the computer. However the computer is spread all over the globe is contested and constrainted. As we add events and other records to our databases we need to ensure records arrive and are added in order so the network (eventually) sees a consistent view of the world achived using CRDT algorithms as a mechanism to linearise the world.
