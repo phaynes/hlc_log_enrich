@@ -18,4 +18,4 @@ jobs:
       - name: Check out the repo.
         uses: actions/checkout@v2
       - name: Build Release package
-        run: docker build -t hlc_log_enrich
+        run: docker build -t hlc_log_enrich .
