@@ -1,0 +1,1 @@
+docker run -v /Users/philiphaynes/devel/rust/wap-log-generator/data:/home/input -v /Users/philiphaynes/devel/rust/hlc_log_enrich/result:/home/output hlc_log_enrich -h pah_map -i /home/input/$1 -o /home/output
