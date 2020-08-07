@@ -20,6 +20,10 @@ jobs:
     - uses: actions/checkout@v2
 
     # Runs a single command using the runners shell
+    - name: Confirm source code
+      run: ls -lash .
+    - name: Confirm more source
+      run: ls -lash ../
     - name: Build HLC Log Enrich
       run: docker build -t hlc_log_enrich .
     - name: Push to packages.
