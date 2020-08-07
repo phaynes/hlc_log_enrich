@@ -1,18 +1,18 @@
-//! 
+//!
 //! For log files processed across a wide area distributed cluster, it is ideal that they are:
 //!   o All processed.
 //!   o Once and only once.
 //!   o Chunked to support re-try functions in contested environments without having to
 //!     redo the entire file.
-//! 
+//!
 //! Using the concept of a hybrid logical clock (HLC) to ensure all records and files are unique,
 //! this program reads a compressed text log file and timestamps each record.
-//! 
+//!
 //! The program:
 //!    Reads a compressed log file
 //!    Embelishes each record with unique timestamps per record;
 //!    Writes it back out in a series of chunks to support managed distribution.
-//! 
+//!
 
 const MAX_LOG_LINES_PER_FILE :i32 = 500000;
 
@@ -31,18 +31,18 @@ use std::io::Write;
 use std::path::Path;
 use std::process;
 
-// 
+//
 // Read command line arguments, check source file path and kick off HLC transform.
 //
 fn main() {
-    
+
     let matches = clap_app!(hlc_enrich =>
         (version: "1.0")
         (author: "Steve S. <s.smith@cricketaustralia.com.au>")
         (about: "HLC log file enricher.")
         (@arg input: -i  +takes_value +required "Input source")
         (@arg output: -o +takes_value +required "Output path")
-        (@arg host: -h +takes_value +required "Hostname")        
+        (@arg host: -h +takes_value +required "Hostname")
     ).get_matches();
 
     let mut output_pathname = String::from(matches.value_of("output").unwrap());
@@ -60,7 +60,7 @@ fn main() {
         println!("Unable to find file {}", input_filename);
         process::exit(1);
     }
-    
+
     // Create output file name.
     let output_short_filename = String::from(input_path.file_name().unwrap().to_str().unwrap());
     let mut hlc_clock = Clock::wall_ns().unwrap();
@@ -81,14 +81,14 @@ fn main() {
 
 //
 // Write updated records to gz compressed file in chunks.
-// 
+//
 fn writeout_records(decoder : &mut GzDecoder<File>, output_pathname : &String, file_chunk_counter : i32) -> bool {
 
     let mut done = true;
     let mut hlc_clock = Clock::wall_ns().unwrap();
     let f = File::create(format!("{}.{}.gz", output_pathname, file_chunk_counter)).unwrap();
     let mut gz = GzEncoder::new(f, Compression::default());
-    
+
     let mut line_counter = 0;
     for line in BufReader::new(decoder).lines() {
         let timestamp = hlc_clock.now().unwrap();
