@@ -15,6 +15,7 @@
 //!
 
 const MAX_LOG_LINES_PER_FILE :i32 = 500000;
+const MAX_FILES_PER_DIR :i32 = 8;
 
 #[macro_use]
 extern crate clap;
@@ -25,6 +26,7 @@ use flate2::write::GzEncoder;
 
 use hybrid_clocks::{Clock};
 
+use std::fs;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::io::Write;
@@ -43,6 +45,7 @@ fn main() {
         (@arg input: -i  +takes_value +required "Input source")
         (@arg output: -o +takes_value +required "Output path")
         (@arg host: -h +takes_value +required "Hostname")
+        (@arg start: -s +takes_value  "start")
     ).get_matches();
 
     let mut output_pathname = String::from(matches.value_of("output").unwrap());
@@ -56,10 +59,15 @@ fn main() {
 
     let input_filename  = matches.value_of("input").unwrap();
     let input_path = Path::new(input_filename);
-     if !input_path.exists() {
+    if !input_path.exists() {
         println!("Unable to find file {}", input_filename);
         process::exit(1);
     }
+    
+    let start_value = match matches.value_of("start") {
+        None => 0,
+        Some(s) => s.parse().unwrap_or(0),
+    };
 
     // Create output file name.
     let output_short_filename = String::from(input_path.file_name().unwrap().to_str().unwrap());
@@ -67,14 +75,14 @@ fn main() {
     let file_timestamp =  hlc_clock.now().unwrap();
     let mut output_file_header = format!("{}{}", output_short_filename, file_timestamp.time);
     output_file_header = output_file_header.replace(".gz", &hostname);
-    output_pathname.push_str(&output_file_header);
+    //output_pathname.push_str(&output_file_header);
 
     // Open existing file to read.
     let tar_gz = File::open(&input_path).unwrap();
     let mut decoder = GzDecoder::new(tar_gz);
     let mut file_chunk_counter = 0;
 
-    while !writeout_records(&mut decoder, &output_pathname, file_chunk_counter) {
+    while !writeout_records(&mut decoder, &output_file_header, &output_pathname, file_chunk_counter, start_value) {
         file_chunk_counter += 1;
     }
 }
@@ -82,11 +90,16 @@ fn main() {
 //
 // Write updated records to gz compressed file in chunks.
 //
-fn writeout_records(decoder : &mut GzDecoder<File>, output_pathname : &String, file_chunk_counter : i32) -> bool {
+fn writeout_records(decoder : &mut GzDecoder<File>, output_file_header : &String,
+    output_pathname : &String, file_chunk_counter : i32, start :i32) -> bool {
 
     let mut done = true;
     let mut hlc_clock = Clock::wall_ns().unwrap();
-    let f = File::create(format!("{}.{}.gz", output_pathname, file_chunk_counter)).unwrap();
+    let subdir_id = start + (file_chunk_counter / MAX_FILES_PER_DIR);
+    let dir_pathname = format!("{}{}/", output_pathname, subdir_id);
+    let file_name = format!("{}{}.{}.gz", dir_pathname, output_file_header, file_chunk_counter);
+    fs::create_dir_all(dir_pathname.as_str()).unwrap();
+    let f = File::create(file_name).unwrap();
     let mut gz = GzEncoder::new(f, Compression::default());
 
     let mut line_counter = 0;
